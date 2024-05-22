@@ -18,9 +18,10 @@ import traceback
 import nltk
 import string
 
-# Cargar el modelo
+# Carregar o modelo, vetor TF-IDF e MultiLabelBinarizer
 model = joblib.load('modelo.pkl')
 vectorizer = joblib.load('tfidf_vectorizer.pkl')
+mlb = joblib.load('mlb.pkl')
 
 # Crear la aplicación Flask con el nombre "api_grupo5"
 app = Flask("api_grupo5")
@@ -44,15 +45,10 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
 def preprocess_text(text):
-    # Convertendo para minúsculas
     text = text.lower()
-    # Tokenização
     tokens = word_tokenize(text)
-    # Removendo stopwords, pontuações e números
     tokens = [word for word in tokens if word not in stop_words and word not in string.punctuation and not word.isdigit()]
-    # Lematização
     tokens = [lemmatizer.lemmatize(word) for word in tokens]
-    # Unindo os tokens novamente em uma string
     processed_text = ' '.join(tokens)
     return processed_text
 
@@ -84,8 +80,12 @@ class MovieGenreClassification(Resource):
             prediction = model.predict(vectorized_text)
             print("Predicción:", prediction)
 
+            # Convertir la predicción a nombres de géneros
+            genre_predictions = mlb.inverse_transform(prediction)
+            print("Géneros predecidos:", genre_predictions)
+
             # Devolver la predicción
-            return {'prediction': prediction.tolist()}
+            return {'prediction': genre_predictions}
 
         except Exception as e:
             traceback.print_exc()
